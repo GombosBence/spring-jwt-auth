@@ -53,6 +53,13 @@ cmake-build-*/
 # File-based project format
 *.iws
 
+# jks
+*.jks
+.idea/
+
+#help
+HELP.md
+
 # IntelliJ
 out/
 
