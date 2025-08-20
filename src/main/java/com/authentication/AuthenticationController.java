@@ -1,7 +1,9 @@
 package com.authentication;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,5 +29,13 @@ public class AuthenticationController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("User has already been registered with this email " +
                     "address");
         }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@Valid @RequestBody LoginRequestDto loginRequest){
+        ResponseCookie jwtCookie = authenticationService.loginUser(loginRequest);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .body("Successful authentication");
     }
 }

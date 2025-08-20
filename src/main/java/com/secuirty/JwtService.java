@@ -1,22 +1,19 @@
 package com.secuirty;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
 
 import javax.crypto.SecretKey;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.time.Duration;
 import java.util.Date;
-import java.util.Map;
 import java.util.function.Function;
 
 @Component
@@ -37,7 +34,7 @@ public class JwtService {
         return keyStore.getKey(alias, password);
     }
 
-    private String createToken(String email){
+    public String createToken(String email){
         return Jwts.builder()
                 .subject(email)
                 .issuedAt(new Date())
@@ -72,5 +69,15 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    public ResponseCookie issueJwtCookie(String name, String token, Duration expiry){
+        return ResponseCookie.from(name, token)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(expiry)
+                .build();
     }
 }

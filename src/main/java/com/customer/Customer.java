@@ -25,6 +25,8 @@ public class Customer {
     @Column(name = "customer_password")
     private String password;
 
+
+    public Customer(){}
     public Customer(String lastName, String firstName, String emailAddress, String password){
         this.lastName = lastName;
         this.firstName = firstName;
