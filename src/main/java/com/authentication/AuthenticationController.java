@@ -2,7 +2,6 @@ package com.authentication;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,12 +22,8 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody RegisterRequestDto registerRequest){
-        if(authenticationService.registerUser(registerRequest)){
-            return ResponseEntity.ok().body("User successfully registered");
-        }else{
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("User has already been registered with this email " +
-                    "address");
-        }
+        authenticationService.registerUser(registerRequest);
+        return ResponseEntity.ok().body("User successfully registered");
     }
 
     @PostMapping("/login")
