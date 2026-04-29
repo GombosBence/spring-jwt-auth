@@ -9,9 +9,8 @@ import java.util.UUID;
 public class Customer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "customer_id")
-    private UUID customerId;
+    private UUID customerId = UUID.randomUUID();
 
     @Column(name = "last_name")
     private String lastName;
