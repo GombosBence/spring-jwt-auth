@@ -6,10 +6,8 @@ import com.secuirty.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -46,8 +44,7 @@ public class AuthenticationService {
 
     public ResponseCookie loginUser(LoginRequestDto loginRequest) {
         //Authenticate customer if exists
-        Authentication auth = authenticationManager.authenticate
-                (new UsernamePasswordAuthenticationToken(loginRequest.emailAddress(), loginRequest.password()));
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.emailAddress(), loginRequest.password()));
         //Generate JWT token and return it as Http cookie
         String jwt = jwtService.createToken(loginRequest.emailAddress());
         return jwtService.issueJwtCookie("token", jwt, Duration.ofHours(1));
