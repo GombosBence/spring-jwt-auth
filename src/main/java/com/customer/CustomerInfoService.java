@@ -20,7 +20,6 @@ public class CustomerInfoService implements UserDetailsService {
         this.customerRepository = customerRepository;
     }
 
-
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<Customer> customer = customerRepository.findByEmailAddress(username);
