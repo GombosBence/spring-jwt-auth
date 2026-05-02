@@ -27,7 +27,6 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                //csrf is not need for stateless JWT
                 .csrf(AbstractHttpConfigurer::disable)
                 //endpoint authorization
                 .authorizeHttpRequests(auth -> auth

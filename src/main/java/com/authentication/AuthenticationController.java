@@ -2,7 +2,6 @@ package com.authentication;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,9 +27,10 @@ public class AuthenticationController {
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@Valid @RequestBody LoginRequestDto loginRequest){
-        ResponseCookie jwtCookie = authenticationService.loginUser(loginRequest);
+        LoginResponseDto response = authenticationService.loginUser(loginRequest);
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, response.jwt().toString())
+                .header(HttpHeaders.SET_COOKIE, response.refreshToken().toString())
                 .body("Successful authentication");
     }
 }

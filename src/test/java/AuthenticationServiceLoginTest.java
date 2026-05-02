@@ -1,6 +1,10 @@
 import com.authentication.AuthenticationService;
 import com.authentication.LoginRequestDto;
+import com.customer.Customer;
+import com.customer.CustomerRepository;
 import com.secuirty.JwtService;
+import com.secuirty.RefreshToken;
+import com.secuirty.RefreshTokenRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,6 +16,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 
 import java.time.Duration;
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -22,6 +28,10 @@ public class AuthenticationServiceLoginTest {
     private AuthenticationManager authenticationManager;
     @Mock
     private JwtService jwtService;
+    @Mock
+    private CustomerRepository customerRepository;
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
     @InjectMocks
     private AuthenticationService authenticationService;
 
@@ -30,10 +40,13 @@ public class AuthenticationServiceLoginTest {
         LoginRequestDto mockLoginRequest = new LoginRequestDto("mockemailaddress@test.com", "Password12345");
         when(authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(mockLoginRequest.emailAddress(), mockLoginRequest.password())))
                 .thenReturn(mock(Authentication.class));
+        when(customerRepository.findByEmailAddress(mockLoginRequest.emailAddress())).thenReturn(Optional.of(new Customer()));
         when(jwtService.createToken(mockLoginRequest.emailAddress())).thenReturn("Mock-Jwt");
 
         authenticationService.loginUser(mockLoginRequest);
-        verify(jwtService).issueJwtCookie("token","Mock-Jwt", Duration.ofHours(1));
+        verify(jwtService).issueResponseCookie("token","Mock-Jwt", Duration.ofHours(1));
+        verify(jwtService).issueResponseCookie(eq("refreshToken"), any(), any());
+        verify(refreshTokenRepository).save(any(RefreshToken.class));
     }
 
     @Test
@@ -44,7 +57,7 @@ public class AuthenticationServiceLoginTest {
 
         assertThrows(BadCredentialsException.class, () -> authenticationService.loginUser(mockLoginRequest));
         verify(jwtService, never()).createToken(any());
-        verify(jwtService, never()).issueJwtCookie(any(), any(), any());
+        verify(jwtService, never()).issueResponseCookie(any(), any(), any());
     }
 
 }

@@ -71,7 +71,7 @@ public class JwtService {
                 .getPayload();
     }
 
-    public ResponseCookie issueJwtCookie(String name, String token, Duration expiry){
+    public ResponseCookie issueResponseCookie(String name, String token, Duration expiry){
         return ResponseCookie.from(name, token)
                 .httpOnly(true)
                 .secure(true)
