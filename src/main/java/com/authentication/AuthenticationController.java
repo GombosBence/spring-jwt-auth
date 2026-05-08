@@ -1,7 +1,9 @@
 package com.authentication;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,5 +34,13 @@ public class AuthenticationController {
                 .header(HttpHeaders.SET_COOKIE, response.jwt().toString())
                 .header(HttpHeaders.SET_COOKIE, response.refreshToken().toString())
                 .body("Successful authentication");
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<String> refreshToken(@Valid HttpServletRequest request){
+            ResponseCookie response = authenticationService.getNewJwt(request);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, response.toString())
+                    .body("Token successfully refreshed");
     }
 }

@@ -1,12 +1,17 @@
 package com.authentication;
 import com.customer.Customer;
 import com.customer.CustomerRepository;
+import com.exception.RefreshTokenExpiredException;
+import com.exception.RefreshTokenNotFoundException;
 import com.exception.UserAlreadyExistsException;
 import com.google.common.hash.Hashing;
 import com.secuirty.JwtService;
 import com.secuirty.RefreshToken;
 import com.secuirty.RefreshTokenRepository;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -14,8 +19,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
+import java.sql.Ref;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -58,6 +65,25 @@ public class AuthenticationService {
                 jwtService.issueResponseCookie("token", jwt, Duration.ofHours(1)),
                 jwtService.issueResponseCookie("refreshToken", refreshToken, Duration.ofDays(7))
                 );
+    }
+
+    public ResponseCookie getNewJwt(HttpServletRequest request){
+        String refreshToken = getTokenFromCookie(request, "refreshToken");
+        if(refreshToken == null) throw new RefreshTokenNotFoundException("RefreshToken not found in the request");
+        RefreshToken dbToken = refreshTokenRepository.findByHashedValue(Hashing.sha256().hashString(refreshToken, StandardCharsets.UTF_8).toString())
+                .orElseThrow(() -> new RefreshTokenNotFoundException("RefreshToken not found"));
+        if(dbToken.getExpiryAt().isBefore(Instant.now()) || dbToken.isRevoked()) throw new RefreshTokenExpiredException("RefreshToken expired or revoked");
+        return jwtService.issueResponseCookie("token", jwtService.createToken(dbToken.getCustomer().getEmailAddress()), Duration.ofHours(1));
+    }
+
+
+    private String getTokenFromCookie(HttpServletRequest request, String cookieName){
+        if(request.getCookies() == null) return null;
+        return Arrays.stream(request.getCookies())
+                .filter(c -> cookieName.equals(c.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
     }
 
     private String generateRefreshToken(Customer customer){
