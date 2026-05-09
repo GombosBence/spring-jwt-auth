@@ -38,9 +38,10 @@ public class AuthenticationController {
 
     @PostMapping("/refresh-token")
     public ResponseEntity<String> refreshToken(@Valid HttpServletRequest request){
-            ResponseCookie response = authenticationService.getNewJwt(request);
+            LoginResponseDto response = authenticationService.getNewJwt(request);
             return ResponseEntity.ok()
-                    .header(HttpHeaders.SET_COOKIE, response.toString())
+                    .header(HttpHeaders.SET_COOKIE, response.jwt().toString())
+                    .header(HttpHeaders.SET_COOKIE, response.refreshToken().toString())
                     .body("Token successfully refreshed");
     }
 }
