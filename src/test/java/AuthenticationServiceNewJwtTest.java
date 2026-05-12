@@ -1,5 +1,5 @@
 import com.authentication.AuthenticationService;
-import com.authentication.LoginResponseDto;
+import com.authentication.CookieResponseDto;
 import com.customer.Customer;
 import com.exception.RefreshTokenExpiredException;
 import com.exception.RefreshTokenNotFoundException;
@@ -46,7 +46,7 @@ public class AuthenticationServiceNewJwtTest {
         when(jwtService.createToken(any())).thenReturn("mock-jwt");
         when(jwtService.issueResponseCookie(any(), any(), any())).thenReturn(mock(ResponseCookie.class));
 
-        LoginResponseDto response = authenticationService.getNewJwt(request);
+        CookieResponseDto response = authenticationService.getNewJwt(request);
 
         assert(mockToken.isRevoked());
         verify(refreshTokenRepository, times(2)).save(any(RefreshToken.class));

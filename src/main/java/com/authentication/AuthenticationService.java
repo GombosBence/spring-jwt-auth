@@ -10,9 +10,7 @@ import com.secuirty.RefreshToken;
 import com.secuirty.RefreshTokenRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,7 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
-import java.sql.Ref;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -57,18 +54,18 @@ public class AuthenticationService {
         customerRepository.save(newCustomer);
     }
 
-    public LoginResponseDto loginUser(LoginRequestDto loginRequest) {
+    public CookieResponseDto loginUser(LoginRequestDto loginRequest) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.emailAddress(), loginRequest.password()));
         Customer customer = customerRepository.findByEmailAddress(loginRequest.emailAddress()).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         String refreshToken = generateRefreshToken(customer);
         String jwt = jwtService.createToken(loginRequest.emailAddress());
-        return new LoginResponseDto(
+        return new CookieResponseDto(
                 jwtService.issueResponseCookie("token", jwt, Duration.ofHours(1)),
                 jwtService.issueResponseCookie("refreshToken", refreshToken, Duration.ofDays(7))
                 );
     }
 
-    public LoginResponseDto getNewJwt(HttpServletRequest request){
+    public CookieResponseDto getNewJwt(HttpServletRequest request){
         String refreshToken = getTokenFromCookie(request, "refreshToken");
         if(refreshToken == null) throw new RefreshTokenNotFoundException("RefreshToken not found in the request");
         RefreshToken dbToken = refreshTokenRepository.findByHashedValue(Hashing.sha256().hashString(refreshToken, StandardCharsets.UTF_8).toString())
@@ -78,9 +75,23 @@ public class AuthenticationService {
         dbToken.setRevoked(true);
         refreshTokenRepository.save(dbToken);
         String newRefreshToken = generateRefreshToken(dbToken.getCustomer());
-        return new LoginResponseDto(
+        return new CookieResponseDto(
                 jwtService.issueResponseCookie("token", jwtService.createToken(dbToken.getCustomer().getEmailAddress()), Duration.ofHours(1)),
                 jwtService.issueResponseCookie("refreshToken", newRefreshToken, Duration.ofDays(7))
+        );
+    }
+
+    public CookieResponseDto logout(HttpServletRequest request){
+        String refreshToken = getTokenFromCookie(request, "refreshToken");
+        if(refreshToken == null) throw new RefreshTokenNotFoundException("Refresh token not found in the request");
+        RefreshToken dbToken = refreshTokenRepository.findByHashedValue(Hashing.sha256().hashString(refreshToken, StandardCharsets.UTF_8).toString())
+                .orElseThrow(() -> new RefreshTokenNotFoundException("RefreshToken not found"));
+
+        dbToken.setRevoked(true);
+        refreshTokenRepository.save(dbToken);
+        return new CookieResponseDto(
+                jwtService.issueResponseCookie("token", "", Duration.ZERO),
+                jwtService.issueResponseCookie("refreshToken", "", Duration.ZERO)
         );
     }
 

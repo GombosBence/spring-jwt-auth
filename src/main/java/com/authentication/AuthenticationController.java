@@ -3,7 +3,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,7 +28,7 @@ public class AuthenticationController {
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@Valid @RequestBody LoginRequestDto loginRequest){
-        LoginResponseDto response = authenticationService.loginUser(loginRequest);
+        CookieResponseDto response = authenticationService.loginUser(loginRequest);
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, response.jwt().toString())
                 .header(HttpHeaders.SET_COOKIE, response.refreshToken().toString())
@@ -38,10 +37,19 @@ public class AuthenticationController {
 
     @PostMapping("/refresh-token")
     public ResponseEntity<String> refreshToken(@Valid HttpServletRequest request){
-            LoginResponseDto response = authenticationService.getNewJwt(request);
+            CookieResponseDto response = authenticationService.getNewJwt(request);
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, response.jwt().toString())
                     .header(HttpHeaders.SET_COOKIE, response.refreshToken().toString())
                     .body("Token successfully refreshed");
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@Valid HttpServletRequest request){
+        CookieResponseDto response = authenticationService.logout(request);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, response.jwt().toString())
+                .header(HttpHeaders.SET_COOKIE, response.refreshToken().toString())
+                .body("Successfully logged out");
     }
 }

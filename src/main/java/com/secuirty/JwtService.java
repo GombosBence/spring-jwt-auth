@@ -9,6 +9,7 @@ import io.jsonwebtoken.Jwts;
 
 import javax.crypto.SecretKey;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -19,12 +20,14 @@ import java.util.function.Function;
 @Component
 public class JwtService {
 
-    private final Key key;
+    private final PrivateKey privateKey;
+    private final PublicKey  publicKey;
 
     public JwtService(@Value("${certificate.path}") String path, @Value("${certificate.password}") char[] password,
                       @Value("${certificate.alias}") String alias)
             throws UnrecoverableKeyException, CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException {
-        this.key = getKey(path, password, alias);
+        this.privateKey = (PrivateKey) getKey(path, password, alias);
+        this.publicKey = getPublicKey(path, password, alias);
     }
 
     private static Key getKey(String path, char[] password, String alias) throws KeyStoreException, IOException, CertificateException,
@@ -34,12 +37,18 @@ public class JwtService {
         return keyStore.getKey(alias, password);
     }
 
+    private static PublicKey getPublicKey(String path, char[] password, String alias) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
+        KeyStore keyStore = KeyStore.getInstance("jks");
+        keyStore.load(new FileInputStream(path), password);
+        return keyStore.getCertificate(alias).getPublicKey();
+    }
+
     public String createToken(String email){
         return Jwts.builder()
                 .subject(email)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 3600000))// 1 hour expiration
-                .signWith(key)
+                .signWith(privateKey)
                 .compact();
     }
 
@@ -65,7 +74,7 @@ public class JwtService {
 
     public Claims extractAllClaims(String token){
         return Jwts.parser()
-                .verifyWith((SecretKey) key)
+                .verifyWith(publicKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
